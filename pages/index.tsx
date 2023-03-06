@@ -1,6 +1,8 @@
 import Head from "next/head";
 import TextField from "@mui/material/TextField";
-import { useEffect, useState, useRef } from "react";
+import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import styles from "@/styles/Home.module.css";
 
 export default function Home() {
@@ -27,20 +29,9 @@ export default function Home() {
             variant="outlined"
             required
           />
-          <TextField
-            id="outlined-basic"
-            label="Start Date and Time"
-            type="datetime-local"
-            variant="outlined"
-            required
-          />
-          <TextField
-            id="outlined-basic"
-            label="End Date and Time"
-            type="datetime-local"
-            variant="outlined"
-            required
-          />
+          <LocalizationProvider dateAdapter={AdapterLuxon}>
+            <DateTimePicker label="Start Date and Time" />
+          </LocalizationProvider>
         </form>
         <br />
       </main>
