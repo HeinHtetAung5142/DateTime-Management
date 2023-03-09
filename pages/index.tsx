@@ -1,6 +1,27 @@
 import Head from "next/head";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
+import {
+  Button,
+  TextField,
+  Paper,
+  TableContainer,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from "@mui/material";
+import { PrismaClient } from "@prisma/client";
+import { DateTime } from "luxon";
+import {
+  useState,
+  useEffect,
+  useRef,
+  JSXElementConstructor,
+  Key,
+  ReactElement,
+  ReactFragment,
+  ReactPortal,
+} from "react";
 import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
@@ -14,7 +35,72 @@ const darkTheme = createTheme({
   },
 });
 
+// const prisma = new PrismaClient();
+
 export default function Home() {
+  const startDateTimeRef = useRef<HTMLInputElement>(
+    null
+  ) as React.MutableRefObject<HTMLInputElement>;
+  const endDateTimeRef = useRef<HTMLInputElement>(
+    null
+  ) as React.MutableRefObject<HTMLInputElement>;
+  const [todo, setToDo] = useState<string>("");
+  const [todos, setTodos] = useState([]) as any;
+
+  // useEffect(() => {
+  //   onRun();
+  // }, []);
+
+  // const onRun = async () => {
+  //   const data = await prisma.todos.findMany({
+  //     orderBy: { id: "desc" },
+  //   });
+  //   setTodos(data);
+  // };
+
+  // const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  //   event.preventDefault();
+
+  //   const startsAt = startDateTimeRef.current?.value;
+
+  //   const createToDo = await prisma.todos.create({
+  //     data: {
+  //       name: todo,
+  //       started_at: startsAt,
+  //       ended_at: endDateTimeRef.current?.value,
+  //     },
+  //   });
+
+  //   // if (error) {
+  //   //   console.log(error);
+  //   // } else {
+  //   //   onRun();
+  //   //   closeHandler();
+  //   // }
+  //   console.log(createToDo);
+  //   onRun();
+  //   closeHandler();
+  // };
+
+  // const handleDelete = async (id: string) => {
+  //   const deleteToDo = await prisma.todos.delete({
+  //     where: {
+  //       id,
+  //     },
+  //   });
+
+  //   // if (error) {
+  //   //   console.log(error);
+  //   // } else {
+  //   //   setTodos(todos.filter((todos) => todos.id !== id));
+  //   // }
+  //   console.log(deleteToDo);
+  // };
+
+  // const closeHandler = () => {
+  //   setToDo("");
+  // };
+
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
@@ -36,17 +122,37 @@ export default function Home() {
           </p>
           <form>
             <TextField
-              id="outlined-basic"
               label="Add a new task"
               variant="outlined"
+              id="outlined-basic"
+              margin="normal"
+              value={todo}
+              onChange={(event) => setToDo(event.target.value)}
+              fullWidth
               required
-              sx={{
-                margin: "10px",
-                width: "100%",
-              }}
             />
             <br />
-            <LocalizationProvider dateAdapter={AdapterLuxon}>
+            <TextField
+              label="Start Date and Time"
+              type="datetime-local"
+              variant="outlined"
+              id="outlined-basic"
+              margin="normal"
+              inputRef={startDateTimeRef}
+              fullWidth
+              required
+            />
+            <TextField
+              label="End Date and Time"
+              type="datetime-local"
+              variant="outlined"
+              id="outlined-basic"
+              margin="normal"
+              inputRef={endDateTimeRef}
+              fullWidth
+              required
+            />
+            {/* <LocalizationProvider dateAdapter={AdapterLuxon}>
               <DateTimePicker
                 label="Start Date and Time"
                 sx={{
@@ -64,19 +170,60 @@ export default function Home() {
                   width: "100%",
                 }}
               />
-            </LocalizationProvider>
+            </LocalizationProvider> */}
             <br />
-            <Button
-              variant="outlined"
-              sx={{
-                padding: "10px 0",
-                margin: "10px",
-                width: "100%",
-              }}
-            >
+            <Button variant="contained" color="primary" type="submit">
               Add
             </Button>
           </form>
+          <br />
+          <TableContainer component={Paper} sx={{ width: "50%" }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Task</TableCell>
+                  <TableCell>Starts</TableCell>
+                  <TableCell>Ends</TableCell>
+                  <TableCell>Option</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {todos.map(
+                  (todo: {
+                    id: string;
+                    name: string;
+                    started_at: Date;
+                    ended_at: Date;
+                  }) => (
+                    <TableRow key={todo.id}>
+                      <TableCell>{todo.name}</TableCell>
+                      <TableCell>
+                        {DateTime.fromJSDate(
+                          todo.started_at
+                        ).toRelativeCalendar()}
+                      </TableCell>
+                      <TableCell>
+                        {DateTime.fromJSDate(
+                          todo.ended_at
+                        ).toRelativeCalendar()}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </main>
 
         <footer className={styles.footer}>Powered by Hein Htet Aung</footer>
