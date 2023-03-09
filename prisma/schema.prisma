@@ -11,12 +11,11 @@ datasource db {
 }
 
 model todos {
-  id String @id(map: "primary") @db.Uuid
-  name String
+  id String @id(map: "primary") @default(uuid()) @db.Uuid
+  name String @db.String
   status Boolean @default(false)
-  started_at DateTime
-  ended_at DateTime
-  completed_at DateTime? 
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
+  started_at DateTime @db.Timestamptz
+  ended_at   DateTime @db.Timestamptz
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
 }
