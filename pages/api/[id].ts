@@ -1,6 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 import prisma from "../../lib/prisma";
+import { DateTime } from "luxon";
 
 export default async function handler(
   req: NextApiRequest,
@@ -11,16 +12,18 @@ export default async function handler(
       orderBy: { id: "desc" },
     });
     res.status(200).json(todos);
-  } else if (req.method === "POST") {
-    const { name, started_at, ended_at } = req.body;
-    const createTodo = await prisma.todos.create({
+  } else if (req.method === "PUT") {
+    const id = req.query.id;
+    const updateTodo = await prisma.todos.update({
+      where: {
+        id: String(id),
+      },
       data: {
-        name,
-        started_at,
-        ended_at,
+        status: true,
+        updated_at: DateTime.now().toString(),
       },
     });
-    res.status(201).json(createTodo);
+    res.status(201).json(updateTodo);
   } else if (req.method === "DELETE") {
     const id = req.query.id;
     const deleteTodo = await prisma.todos.delete({

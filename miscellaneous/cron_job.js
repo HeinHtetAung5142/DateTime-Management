@@ -1,19 +1,16 @@
-const { createClient } = require("@supabase/supabase-js");
 const { DateTime } = require("luxon");
 const SibApiV3Sdk = require("sib-api-v3-sdk");
 const cron = require("node-cron");
+const { PrismaClient } = require("@prisma/client");
 
-// Initialize Supabase client
-const supabaseUrl = "https://vtucjlmymmpcdqaibwhg.supabase.co";
-const supabaseKey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0dWNqbG15bW1wY2RxYWlid2hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NjY2OTExNDQsImV4cCI6MTk4MjI2NzE0NH0.bkAcAstHCK9-w_j1aHVZom_RWVGE_IgwndXhlTKG-VQ";
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Initialize Prisma client
+const prisma = new PrismaClient();
 
 // Initialize Sendinblue client
 const defaultClient = SibApiV3Sdk.ApiClient.instance;
 var apiKey = defaultClient.authentications["api-key"];
 apiKey.apiKey =
-  "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";
+  "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";
 
 var api = new SibApiV3Sdk.AccountApi();
 api.getAccount().then(
@@ -43,15 +40,17 @@ const calculateTimeDiff = (end) => {
 };
 
 async function checkDates() {
-  const { data: todos, error } = await supabase
-    .from("todos")
-    .select("id, name, starts_at, ends_at")
-    .order("id", { ascending: true });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
+  const todos = await prisma.todos.findMany({
+    select: {
+      id: true,
+      name: true,
+      started_at: true,
+      ended_at: true,
+    },
+    orderBy: {
+      id: "asc",
+    },
+  });
 
   console.log(
     "----------------------- First Test: Check Dates -----------------------"
@@ -60,7 +59,7 @@ async function checkDates() {
   // Loop through each todo record
   todos.forEach((todo) => {
     // Check if the start date is earlier than the end date
-    if (new Date(todo.starts_at) < new Date(todo.ends_at)) {
+    if (new Date(todo.started_at) < new Date(todo.ended_at)) {
       // Do nothing if the start date is earlier than the end date
       console.log(`Todo "${todo.name}" has valid dates`);
     } else {
@@ -71,15 +70,17 @@ async function checkDates() {
 }
 
 async function checkDuration() {
-  const { data: todos, error } = await supabase
-    .from("todos")
-    .select("id, name, starts_at, ends_at")
-    .order("id", { ascending: true });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
+  const todos = await prisma.todos.findMany({
+    select: {
+      id: true,
+      name: true,
+      started_at: true,
+      ended_at: true,
+    },
+    orderBy: {
+      id: "asc",
+    },
+  });
 
   console.log(
     "----------------------- Second Test: Check Deadline -----------------------"
@@ -88,7 +89,7 @@ async function checkDuration() {
   // Loop through each todo record
   todos.forEach((todo) => {
     // Check if the duration is less than 24 hours
-    if (calculateTimeDiff(todo.ends_at) === true) {
+    if (calculateTimeDiff(todo.ended_at) === true) {
       // Do nothing if the start date is earlier than the end date
       console.log(`Todo "${todo.name}" ends in less than 24 hours`);
 
@@ -148,9 +149,11 @@ const checkDatesTask = cron.schedule("* * * * *", () => {
   checkDates();
 });
 
-const checkDurationTask = cron.schedule("* 8 * * *", () => {
+const checkDurationTask = cron.schedule("* * * * *", () => {
   checkDuration();
 });
 
-checkDatesTask.start();
-checkDurationTask.start();
+export default async function startCron() {
+  checkDatesTask.start();
+  checkDurationTask.start();
+}

@@ -16,6 +16,7 @@ import { DateTime } from "luxon";
 import { useState, useEffect, useRef } from "react";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import startCron from "../miscellaneous/cron_job";
 import styles from "@/styles/Home.module.css";
 
 const darkTheme = createTheme({
@@ -36,7 +37,6 @@ const Home: React.FC<Props> = (props) => {
     null
   ) as React.MutableRefObject<HTMLInputElement>;
   const [todo, setToDo] = useState<string>("");
-  const [todos, setTodos] = useState([]) as any;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -189,9 +189,8 @@ export const getServerSideProps = async () => {
   const todos = await prisma.todos.findMany({
     orderBy: { id: "desc" },
   });
-  console.log(
-    DateTime.fromISO(todos[0].started_at.toISOString()).toRelativeCalendar()
-  );
+
+  startCron();
   return {
     props: {
       todos: JSON.parse(JSON.stringify(todos)),
