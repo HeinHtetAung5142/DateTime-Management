@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Router from "next/router";
 import {
   Button,
   TextField,
@@ -10,21 +11,9 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../lib/prisma";
 import { DateTime } from "luxon";
-import {
-  useState,
-  useEffect,
-  useRef,
-  JSXElementConstructor,
-  Key,
-  ReactElement,
-  ReactFragment,
-  ReactPortal,
-} from "react";
-import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { useState, useEffect, useRef } from "react";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import styles from "@/styles/Home.module.css";
@@ -35,9 +24,11 @@ const darkTheme = createTheme({
   },
 });
 
-// const prisma = new PrismaClient();
+type Props = {
+  todos: any;
+};
 
-export default function Home() {
+const Home: React.FC<Props> = (props) => {
   const startDateTimeRef = useRef<HTMLInputElement>(
     null
   ) as React.MutableRefObject<HTMLInputElement>;
@@ -58,29 +49,39 @@ export default function Home() {
   //   setTodos(data);
   // };
 
-  // const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-  //   event.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-  //   const startsAt = startDateTimeRef.current?.value;
+    const startsAt = DateTime.fromISO(startDateTimeRef.current?.value);
+    const endsAt = DateTime.fromISO(endDateTimeRef.current?.value);
 
-  //   const createToDo = await prisma.todos.create({
-  //     data: {
-  //       name: todo,
-  //       started_at: startsAt,
-  //       ended_at: endDateTimeRef.current?.value,
-  //     },
-  //   });
+    try {
+      const body = { name: todo, started_at: startsAt, ended_at: endsAt };
+      await fetch("/api/todos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      Router.push("/");
+    } catch (error) {
+      console.error(error);
+    }
 
-  //   // if (error) {
-  //   //   console.log(error);
-  //   // } else {
-  //   //   onRun();
-  //   //   closeHandler();
-  //   // }
-  //   console.log(createToDo);
-  //   onRun();
-  //   closeHandler();
-  // };
+    // const createToDo = await prisma.todos.create({
+    //   data: {
+    //     name: todo,
+    //     started_at: startsAt,
+    //     ended_at: endDateTimeRef.current?.value,
+    //   },
+    // });
+
+    // if (error) {
+    //   console.log(error);
+    // } else {
+    //   onRun();
+    //   closeHandler();
+    // }
+  };
 
   // const handleDelete = async (id: string) => {
   //   const deleteToDo = await prisma.todos.delete({
@@ -97,9 +98,9 @@ export default function Home() {
   //   console.log(deleteToDo);
   // };
 
-  // const closeHandler = () => {
-  //   setToDo("");
-  // };
+  const closeHandler = () => {
+    setToDo("");
+  };
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -120,7 +121,7 @@ export default function Home() {
             Get started by adding{" "}
             <code className={styles.code}>a new task</code>
           </p>
-          <form>
+          <form onSubmit={handleSubmit}>
             <TextField
               label="Add a new task"
               variant="outlined"
@@ -152,25 +153,6 @@ export default function Home() {
               fullWidth
               required
             />
-            {/* <LocalizationProvider dateAdapter={AdapterLuxon}>
-              <DateTimePicker
-                label="Start Date and Time"
-                sx={{
-                  margin: "10px",
-                  width: "100%",
-                }}
-              />
-            </LocalizationProvider>
-            <br />
-            <LocalizationProvider dateAdapter={AdapterLuxon}>
-              <DateTimePicker
-                label="End Date and Time"
-                sx={{
-                  margin: "10px",
-                  width: "100%",
-                }}
-              />
-            </LocalizationProvider> */}
             <br />
             <Button variant="contained" color="primary" type="submit">
               Add
@@ -188,7 +170,7 @@ export default function Home() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {todos.map(
+                {props.todos.map(
                   (todo: {
                     id: string;
                     name: string;
@@ -198,13 +180,13 @@ export default function Home() {
                     <TableRow key={todo.id}>
                       <TableCell>{todo.name}</TableCell>
                       <TableCell>
-                        {DateTime.fromJSDate(
-                          todo.started_at
+                        {DateTime.fromISO(
+                          JSON.parse(JSON.stringify(todo.started_at))
                         ).toRelativeCalendar()}
                       </TableCell>
                       <TableCell>
-                        {DateTime.fromJSDate(
-                          todo.ended_at
+                        {DateTime.fromISO(
+                          JSON.parse(JSON.stringify(todo.ended_at))
                         ).toRelativeCalendar()}
                       </TableCell>
                       <TableCell>
@@ -230,4 +212,20 @@ export default function Home() {
       </div>
     </ThemeProvider>
   );
-}
+};
+
+export const getServerSideProps = async () => {
+  const todos = await prisma.todos.findMany({
+    orderBy: { id: "desc" },
+  });
+  console.log(
+    DateTime.fromISO(todos[0].started_at.toISOString()).toRelativeCalendar()
+  );
+  return {
+    props: {
+      todos: JSON.parse(JSON.stringify(todos)),
+    },
+  };
+};
+
+export default Home;
