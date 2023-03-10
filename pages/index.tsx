@@ -38,17 +38,6 @@ const Home: React.FC<Props> = (props) => {
   const [todo, setToDo] = useState<string>("");
   const [todos, setTodos] = useState([]) as any;
 
-  // useEffect(() => {
-  //   onRun();
-  // }, []);
-
-  // const onRun = async () => {
-  //   const data = await prisma.todos.findMany({
-  //     orderBy: { id: "desc" },
-  //   });
-  //   setTodos(data);
-  // };
-
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -66,37 +55,18 @@ const Home: React.FC<Props> = (props) => {
     } catch (error) {
       console.error(error);
     }
-
-    // const createToDo = await prisma.todos.create({
-    //   data: {
-    //     name: todo,
-    //     started_at: startsAt,
-    //     ended_at: endDateTimeRef.current?.value,
-    //   },
-    // });
-
-    // if (error) {
-    //   console.log(error);
-    // } else {
-    //   onRun();
-    //   closeHandler();
-    // }
   };
 
-  // const handleDelete = async (id: string) => {
-  //   const deleteToDo = await prisma.todos.delete({
-  //     where: {
-  //       id,
-  //     },
-  //   });
-
-  //   // if (error) {
-  //   //   console.log(error);
-  //   // } else {
-  //   //   setTodos(todos.filter((todos) => todos.id !== id));
-  //   // }
-  //   console.log(deleteToDo);
-  // };
+  const handleDelete = async (id: string) => {
+    try {
+      await fetch(`/api/${id}`, {
+        method: "DELETE",
+      });
+      Router.push("/");
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const closeHandler = () => {
     setToDo("");
@@ -195,6 +165,7 @@ const Home: React.FC<Props> = (props) => {
                           color="primary"
                           onClick={(event) => {
                             event.stopPropagation();
+                            handleDelete(todo.id);
                           }}
                         >
                           Delete

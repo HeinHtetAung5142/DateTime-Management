@@ -28,7 +28,7 @@ export default async function handler(
         id,
       },
     });
-    res.status(204).end();
+    res.json(deleteTodo);
   } else {
     res.status(405).end();
   }
